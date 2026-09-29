@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TripPlan, TripSearchParams, TravelOffer } from './types/trip';
+import { createProceduralTripPlan, evaluateOneDayFeasibility, TRAVEL_OFFERS } from './utils/planner';
 import { Header } from './components/Header';
 import { HeroSection } from './components/HeroSection';
 import { SearchForm } from './components/SearchForm';
@@ -48,10 +49,15 @@ export default function App() {
   const fetchOffers = async () => {
     try {
       const res = await fetch('/api/offers');
+      if (!res.ok) throw new Error('Network error');
       const data = await res.json();
-      if (data.offers) setOffers(data.offers);
-    } catch (err) {
-      console.warn('Failed to load offers:', err);
+      if (data.offers) {
+        setOffers(data.offers);
+        return;
+      }
+    } catch {
+      // Fallback for static environments
+      setOffers(TRAVEL_OFFERS);
     }
   };
 
@@ -63,10 +69,18 @@ export default function App() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...params, currency }),
       });
+      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
       const data = await res.json();
-      setCurrentPlan(data);
+      if (data && data.recommendedPlace) {
+        setCurrentPlan(data);
+        return;
+      }
+      throw new Error('Invalid plan data');
     } catch (err) {
-      console.error('Plan fetch error:', err);
+      console.warn('Backend API unavailable, using offline intelligent engine:', err);
+      const feasibility = evaluateOneDayFeasibility(params.origin, params.destination);
+      const offlinePlan = createProceduralTripPlan({ ...params, currency }, feasibility);
+      setCurrentPlan(offlinePlan);
     } finally {
       setIsLoading(false);
     }
