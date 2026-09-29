@@ -1,0 +1,6 @@
+{
+  "name": "Best Trip Planner",
+  "description": "Your AI Travel Agent – Plan Better, Travel Smarter. Plan any destination with One-Day Trip return guarantee, guided maps, transport, farm food, and smart budget optimizer.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
